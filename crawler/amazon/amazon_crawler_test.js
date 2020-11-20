@@ -14,7 +14,7 @@ const uuid = require('uuid');
   const MAX_ITEMS = 500;
 
   page.on('console', msg => console.log('PAGE LOG:', msg.text()));
-  await page.goto(`https://amazon.com/s?${qs.stringify({
+  await page.goto(`https://amazon.sg/s?${qs.stringify({
     k: encodeURIComponent(keyword),
   })}`);
 
@@ -67,7 +67,7 @@ const uuid = require('uuid');
     .map(item => ({id: uuid.v4(), ...item}));
   while (i < maxPage && items.length < MAX_ITEMS) {
     i += 1;
-    await page.goto(`https://amazon.com/s?${qs.stringify({
+    await page.goto(`https://amazon.sg/s?${qs.stringify({
       k: encodeURIComponent(keyword),
       page: i,
     })}`);
