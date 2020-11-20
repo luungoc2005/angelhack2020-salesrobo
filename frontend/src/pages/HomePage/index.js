@@ -11,7 +11,7 @@ export const HomePage = () => {
   return (
     <>
       <List
-        header={<div>Your products</div>}
+        header={<div>My products</div>}
         bordered
         dataSource={products}
         rowKey={item => item.id}

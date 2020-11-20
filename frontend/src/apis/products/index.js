@@ -8,3 +8,6 @@ export const getProductById =
 
 export const putProduct = 
   async (data) => await apiInstance.put(`/products`, data)
+
+export const postProduct = 
+  async (id, data) => await apiInstance.post(`/products/${id}`, data)

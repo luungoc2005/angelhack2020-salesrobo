@@ -5,25 +5,30 @@ import {
   Route,
   Link
 } from "react-router-dom";
+import { PageLayout } from 'components/PageLayout';
 import { HomePage } from 'pages/HomePage';
 import { ProductSearch } from 'pages/ProductSearch';
+import { ProductPage } from 'pages/ProductPage';
 
-import { Button } from 'antd';
 import './App.css';
 
 function App() {
   return (
     <div className="App">
-      <Button type="primary">Button</Button>
       <Router>
-        <Switch>
-          <Route path="/">
-            <HomePage />
-          </Route>
-          <Route path="/search">
-            <ProductSearch />
-          </Route>
-        </Switch>
+        <PageLayout>
+          <Switch>
+            <Route exact path="/">
+              <HomePage />
+            </Route>
+            <Route exact path="/search">
+              <ProductSearch />
+            </Route>
+            <Route exact path="/products/:id">
+              <ProductPage />
+            </Route>
+          </Switch>
+        </PageLayout>
       </Router>
     </div>
   );

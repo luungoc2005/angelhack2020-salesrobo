@@ -28,6 +28,8 @@ def create_app(test_config=None):
         return 'Hello, World!'
 
     from . import products
+    from . import misc_data
     app.register_blueprint(products.bp)
+    app.register_blueprint(misc_data.bp)
 
     return app

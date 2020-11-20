@@ -28,10 +28,25 @@ def get_products_by_id(id):
 
 
 @bp.route('/', methods=('PUT',))
-def put_products():
+def put_product():
     data = request.json
     data['id'] = uuid4().hex
     all_data = json.loads(DATA_FILE_NAME)
+    all_data.append(data)
+
+    with open(DATA_FILE_NAME, 'w') as json_file:
+        json.dump(all_data, json_file)
+    
+    return jsonify(data)
+
+
+@bp.route('/<id>', methods=('POST',))
+def post_product(id):
+    data = request.json
+    data['id'] = id
+
+    all_data = json.loads(DATA_FILE_NAME)
+    all_data = [item for item in all_data if item['id'] != id]
     all_data.append(data)
 
     with open(DATA_FILE_NAME, 'w') as json_file:

@@ -65,11 +65,13 @@ const uuid = require('uuid');
   await page.waitForSelector(".shopee-mini-page-controller__state");
   const maxPage = await page.evaluate(() => {
     const containerElement = document.querySelector(".shopee-mini-page-controller__state");
-    const pageNavLinks = containerElement.children;
+    const pageNavLinks = [...containerElement.children];
     const numberedPages = []
-    pageNavLinks.forEach(element => 
-      numberedPages.push(parseInt(element.textContent)))
-    return Math.max(...numberedPages);
+    for (let i = 0; i < pageNavLinks.length; i++) {
+      const element = pageNavLinks[i];
+      numberedPages.push(parseInt(element.textContent));
+    }
+    return Math.max(...numberedPages.filter(it => !isNaN(it)));
   });
 
   let i = 0; // starts from 1
@@ -88,28 +90,6 @@ const uuid = require('uuid');
     // write every time
     fs.writeFileSync(`data_shopee_${keyword}.json`, JSON.stringify(items));  
   }
-
-  // let items = [];
-  // try {
-  //   let previousHeight;
-  //   let newItems = [];
-  //   while (true) {
-  //     newItems = await page.evaluate(extractItems);
-  //     if (newItems.length > items.length) {
-  //       items = newItems;
-  //       previousHeight = await page.evaluate('document.body.scrollHeight');
-  //       await page.evaluate('window.scrollTo(0, document.body.scrollHeight)');
-  //       await page.waitForFunction(`document.body.scrollHeight > ${previousHeight}`);
-  //       await page.waitForTimeout(500);
-  //     }
-  //     else {
-  //       break;
-  //     }
-  //   }
-  // }
-  // catch (e) {}
-  // console.log(items);
-  // console.log(items.length);
 
   await browser.close();
 })();
