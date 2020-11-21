@@ -9,6 +9,7 @@ from werkzeug.exceptions import (
     NotFound,
     BadRequest,
 )
+import numpy as np
 from werkzeug.utils import secure_filename
 from urllib.request import pathname2url
 
@@ -16,7 +17,20 @@ bp = Blueprint('search', __name__, url_prefix='/search')
 MAX_RESULTS = 100
 VENDORS = ['amazon', 'shopee']
 UPLOAD_PATH = path.join(path.dirname(__file__), "_upload")
+IMAGE_SIMILARITY_THRESHOLD = 20
 
+"""
+One iphone vs multiple iphones
+16.93065
+One iphone vs Samsung phone
+17.579874
+One iphone vs Dog
+24.606842
+Dog vs Cat
+24.56893
+Cat vs Cat
+16.510061
+"""
 
 @bp.route('/suggestions', methods=('GET',))
 def get_search_keywords():
@@ -37,6 +51,8 @@ def get_search_keywords():
 def get_search_results():
     query = request.args.get('q')
     limit = request.args.get('limit', MAX_RESULTS)
+    product_image = request.args.get('product_image', None)
+
     data = []
     for vendor in VENDORS:
         vendor_file_path = path.join(
@@ -53,9 +69,31 @@ def get_search_results():
                 and item.get('price') > 0
                 and item.get('sold') is not None
                 and item.get('sold') > 0
-            ][:limit // 2]
-            data.extend(vendor_data)
+            ]
 
+        if product_image is not None:
+            product_image_path = path.join(UPLOAD_PATH, product_image)
+            if path.isfile(product_image_path):
+                vendor_data = [
+                    item for item in vendor_data if 
+                    item.get('image')
+                ]
+                print(f"Found {len(vendor_data)} items with images")
+                from .utils.encode_image import encode_image
+                my_product_enc = encode_image(product_image_path)
+                filtered_vendor_data = []
+                for item in vendor_data:
+                    enc = encode_image(item.get('image'))
+                    if enc is not None:
+                        distance = np.linalg.norm(my_product_enc - enc, axis=0)
+                        print(distance)
+                        if distance < IMAGE_SIMILARITY_THRESHOLD:
+                            filtered_vendor_data.append(item)
+                vendor_data = filtered_vendor_data
+
+        data.extend(vendor_data[:limit // 2])
+
+    # to make the results look nicer in the list
     random.shuffle(data)
     return jsonify(data)
 

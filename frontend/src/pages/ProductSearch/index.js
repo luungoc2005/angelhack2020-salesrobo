@@ -15,10 +15,11 @@ import {
 import {
   UploadOutlined,
 } from '@ant-design/icons';
+
 import { getHolidays } from 'apis/misc_data'
-import { getSuggestions, searchProducts } from 'apis/search'
-import amazonIcon from 'assets/amazon_favicon.ico'
-import shopeeIcon from 'assets/shopee_favicon.ico'
+import { getSuggestions, searchProducts, uploadProductImage } from 'apis/search'
+import amazonIcon from 'assets/amazon_favicon.ico';
+import shopeeIcon from 'assets/shopee_favicon.ico';
 
 const siteIcons = {
   'amazon': amazonIcon,
@@ -29,6 +30,7 @@ export const ProductSearch = () => {
   const [ searchInput, setSearchInput ] = useState('');
   const [ marginalCost, setMarginalCost ] = useState(0);
   const [ affectedBy, setAffectedBy ] = useState(null);
+  const [ productImageFile, setProductImageFile ] = useState('');
   const [ searchResults, setSearchResults ] = useState([]);
   const [ searchSuggestions, setSearchSuggestions ] = useState([]);
   const [ holidays, setHolidays ] = useState([]);
@@ -44,10 +46,18 @@ export const ProductSearch = () => {
     fetchHolidays();
     fetchSearchSuggestions();
   }, [])
-  const handleSearch = async (option) => {
-    const resp = await searchProducts(option);
+  const handleSearch = async (option, productImage) => {
+    const resp = await searchProducts(option, productImage);
     setSearchResults(resp.data);
   };
+  const handleUpload = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file)
+    const resp = await uploadProductImage(formData);
+    setProductImageFile(resp.data.name);
+    await handleSearch(searchInput, resp.data.name);
+  }
+
   return (
     <>
       <PageHeader
@@ -60,7 +70,7 @@ export const ProductSearch = () => {
             options={searchSuggestions}
             value={searchInput}
             onChange={setSearchInput}
-            onSelect={handleSearch}
+            onSelect={(value) => handleSearch(value, productImageFile)}
             style={{ width: '100%', marginTop: 4 }}
           >
             <Input.Search
@@ -73,8 +83,16 @@ export const ProductSearch = () => {
           <div style={{ height: 20 }} />
 
           <Typography.Text style={{ marginRight: 20 }}>Product image</Typography.Text>
-          <Upload>
-            <Button icon={<UploadOutlined />}>Click to Upload</Button>
+          <Upload
+            action={handleUpload}
+            multiple={false}
+            listType="picture"
+          >
+            <Button 
+              icon={<UploadOutlined />}
+            >
+              Click to Upload
+            </Button>
           </Upload>
 
           <div style={{ height: 20 }} />

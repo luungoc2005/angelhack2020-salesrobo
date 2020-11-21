@@ -1,3 +1,4 @@
+from numpy.core.defchararray import encode
 import torch
 import numpy as np
 import pickle
@@ -48,15 +49,18 @@ def encode_image(url):
         return data[url]
     
 
-    print(f"Retrieving and encoding image {url}")
-    img_req = requests.get(url, headers=headers, stream=True, timeout=5)
-    if img_req.status_code != 200:
-        return None
+    if path.isfile(url):
+        img_buffer = open(url, 'rb')
+    else:
+        # print(f"Retrieving and encoding image {url}")
+        img_req = requests.get(url, headers=headers, stream=True, timeout=5)
+        if img_req.status_code != 200:
+            return None
 
-    img_buffer = io.BytesIO()
-    for chunk in img_req:
-        img_buffer.write(chunk)
-    img_buffer.seek(0)
+        img_buffer = io.BytesIO()
+        for chunk in img_req:
+            img_buffer.write(chunk)
+        img_buffer.seek(0)
 
     img = Image.open(img_buffer)
     input_tensor = transform_test(img)
@@ -77,9 +81,35 @@ def encode_image(url):
     with open(DATA_FILE, 'wb') as fp:
         pickle.dump(data, fp)
 
-    print("Completed")
+    img_buffer.close()
+    # print("Completed")
     return output
 
 
 if __name__ == '__main__':
     print(encode_image("https://github.com/pytorch/hub/raw/master/images/dog.jpg"))
+    print("One iphone vs multiple iphones")
+    print(np.linalg.norm(
+        encode_image("https://store.storeimages.cdn-apple.com/8756/as-images.apple.com/is/iphone-12-family-select-2020?wid=940&amp;hei=1112&amp;fmt=jpeg&amp;qlt=80&amp;op_usm=0.5,0.5&amp;.v=1604343709000") -
+        encode_image("https://store.storeimages.cdn-apple.com/8756/as-images.apple.com/is/iphone11-select-2019-family?wid=882&hei=1058&fmt=jpeg&qlt=80&op_usm=0.5,0.5&.v=1567022175704")
+    , axis=0))
+    print("One iphone vs Samsung phone")
+    print(np.linalg.norm(
+        encode_image("https://store.storeimages.cdn-apple.com/8756/as-images.apple.com/is/iphone-12-family-select-2020?wid=940&amp;hei=1112&amp;fmt=jpeg&amp;qlt=80&amp;op_usm=0.5,0.5&amp;.v=1604343709000") -
+        encode_image("https://images.samsung.com/sg/smartphones/galaxy-note20/buy/001-note20series-productimage-mo-720.jpg")
+    , axis=0))
+    print("One iphone vs Dog")
+    print(np.linalg.norm(
+        encode_image("https://store.storeimages.cdn-apple.com/8756/as-images.apple.com/is/iphone-12-family-select-2020?wid=940&amp;hei=1112&amp;fmt=jpeg&amp;qlt=80&amp;op_usm=0.5,0.5&amp;.v=1604343709000") -
+        encode_image("https://github.com/pytorch/hub/raw/master/images/dog.jpg")
+    , axis=0))
+    print("Dog vs Cat")
+    print(np.linalg.norm(
+        encode_image("https://ichef.bbci.co.uk/news/1024/cpsprodpb/151AB/production/_111434468_gettyimages-1143489763.jpg") -
+        encode_image("https://github.com/pytorch/hub/raw/master/images/dog.jpg")
+    , axis=0))
+    print("Cat vs Cat")
+    print(np.linalg.norm(
+        encode_image("https://ichef.bbci.co.uk/news/1024/cpsprodpb/151AB/production/_111434468_gettyimages-1143489763.jpg") -
+        encode_image("https://image.cnbcfm.com/api/v1/image/105828578-1554223245858gettyimages-149052633.jpeg?v=1554223281")
+    , axis=0))
