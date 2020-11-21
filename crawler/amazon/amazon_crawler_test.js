@@ -76,7 +76,7 @@ const uuid = require('uuid');
       .map(item => ({id: uuid.v4(), ...item})));
     
     // write every time
-    fs.writeFileSync(`data_amazon_${keyword}.json`, JSON.stringify(items));  
+    fs.writeFileSync(`data_amazon_${encodeURIComponent(keyword)}.json`, JSON.stringify(items));  
   }
 
   await browser.close();

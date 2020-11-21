@@ -8,10 +8,11 @@ setup(
     zip_safe=False,
     install_requires=[
         'flask',
+        'flask-cors',
         'numpy',
         'pandas',
         'pystan',
         'fbprophet',
-        'transformers',
+        'torch',
     ],
 )
