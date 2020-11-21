@@ -16,8 +16,10 @@ import {
   UploadOutlined,
 } from '@ant-design/icons';
 
-import { getHolidays } from 'apis/misc_data'
+import { getHolidays } from 'apis/misc_data';
+import { uploadSalesData } from 'apis/sales_data';
 import { getSuggestions, searchProducts, uploadProductImage } from 'apis/search'
+
 import amazonIcon from 'assets/amazon_favicon.ico';
 import shopeeIcon from 'assets/shopee_favicon.ico';
 
@@ -28,12 +30,18 @@ const siteIcons = {
 
 export const ProductSearch = () => {
   const [ searchInput, setSearchInput ] = useState('');
-  const [ marginalCost, setMarginalCost ] = useState(0);
-  const [ affectedBy, setAffectedBy ] = useState(null);
   const [ productImageFile, setProductImageFile ] = useState('');
+  const [ affectedBy, setAffectedBy ] = useState(null);
+  const [ priceFrom, setPriceFrom ] = useState(0);
+  const [ priceTo, setPriceTo ] = useState(0);
+
+  const [ marginalCost, setMarginalCost ] = useState(0);
+  const [ salesDataFile, setSalesDataFile ] = useState('');
+  
   const [ searchResults, setSearchResults ] = useState([]);
   const [ searchSuggestions, setSearchSuggestions ] = useState([]);
   const [ holidays, setHolidays ] = useState([]);
+  
   useEffect(() => {
     const fetchHolidays = async () => {
       const resp = await getHolidays();
@@ -46,16 +54,36 @@ export const ProductSearch = () => {
     fetchHolidays();
     fetchSearchSuggestions();
   }, [])
-  const handleSearch = async (option, productImage) => {
-    const resp = await searchProducts(option, productImage);
+  const handleSearch = async (
+    keyword, argProductImage, argPriceFrom, argPriceTo
+  ) => {
+    const resp = await searchProducts(
+      keyword || searchInput, 
+      argProductImage || productImageFile, 
+      argPriceFrom || priceFrom, 
+      argPriceTo || priceTo,
+    );
     setSearchResults(resp.data);
+    setMarginalCost(
+      Math.max(...resp.data.map(item => item.price ? item.price : 0))
+    )
   };
   const handleUpload = async (file) => {
     const formData = new FormData();
     formData.append('file', file)
     const resp = await uploadProductImage(formData);
     setProductImageFile(resp.data.name);
-    await handleSearch(searchInput, resp.data.name);
+    await handleSearch(searchInput, resp.data.name, priceFrom, priceTo);
+  }
+  useEffect(() => {
+    handleSearch(null, null, priceFrom, priceTo);
+  }, [priceFrom, priceTo])
+
+  const handleUploadSalesData = async (file) => {
+    const formData = new FormData();
+    formData.append('file', file)
+    const resp = await uploadSalesData(formData);
+    setSalesDataFile(resp.data.name);
   }
 
   return (
@@ -96,13 +124,24 @@ export const ProductSearch = () => {
           </Upload>
 
           <div style={{ height: 20 }} />
-          <Typography.Text style={{ marginRight: 20 }}>Product likely affected by</Typography.Text>
-          <Select mode="multiple" style={{ width: 240 }} onChange={setAffectedBy}>
-            {holidays && holidays.map(item => 
-              <Select.Option key={item.id} value={item.id}>
-                {item.name}
-              </Select.Option>)}
-          </Select>
+          <div>
+            <Typography.Text style={{ marginRight: 20 }}>Price</Typography.Text>
+            <InputNumber
+              defaultValue={0}
+              formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={value => value.replace(/\$\s?|(,*)/g, '')}
+              onChange={setPriceFrom}
+              value={priceFrom}
+            />
+            <Typography.Text style={{ marginRight: 10, marginLeft: 10 }}>-</Typography.Text>
+            <InputNumber
+              defaultValue={0}
+              formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+              parser={value => value.replace(/\$\s?|(,*)/g, '')}
+              onChange={setPriceTo}
+              value={priceTo}
+            />
+          </div>
 
           <div style={{ height: 20 }} />
           <List
@@ -125,6 +164,15 @@ export const ProductSearch = () => {
               </List.Item>
             }
           />
+
+          <div style={{ height: 20 }} />
+          <Typography.Text style={{ marginRight: 20 }}>Product likely affected by</Typography.Text>
+          <Select mode="multiple" style={{ width: 240 }} onChange={setAffectedBy}>
+            {holidays && holidays.map(item => 
+              <Select.Option key={item.id} value={item.id}>
+                {item.name}
+              </Select.Option>)}
+          </Select>
         </Layout.Content>
       </PageHeader>
 
@@ -139,16 +187,21 @@ export const ProductSearch = () => {
             formatter={value => `$ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
             parser={value => value.replace(/\$\s?|(,*)/g, '')}
             onChange={setMarginalCost}
+            value={marginalCost}
           />
         </div>
         <div style={{ height: 20 }} />
         <div>
           <Typography.Text style={{ marginRight: 20 }}>Past sales data</Typography.Text>
-          <Upload>
+          <Upload
+            action={handleUploadSalesData}
+            multiple={false}
+          >
             <Button icon={<UploadOutlined />}>Click to Upload</Button>
           </Upload>
         </div>
       </PageHeader>
+
       <Button
         block 
         type="primary"

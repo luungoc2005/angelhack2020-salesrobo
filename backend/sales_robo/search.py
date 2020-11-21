@@ -44,15 +44,18 @@ def get_search_keywords():
         "birthday cake",
         "nintendo switch",
         "lipstick",
+        "iphone",
+        "laptop",
     ])
 
 
-@bp.route('/', methods=('GET',))
-def get_search_results():
-    query = request.args.get('q')
-    limit = request.args.get('limit', MAX_RESULTS)
-    product_image = request.args.get('product_image', None)
-
+def _search_products(
+    query, 
+    limit=None, 
+    product_image=None,
+    price_from=None,
+    price_to=None,
+):
     data = []
     for vendor in VENDORS:
         vendor_file_path = path.join(
@@ -71,6 +74,18 @@ def get_search_results():
                 and item.get('sold') > 0
             ]
 
+        if price_from is not None and price_from > 0:
+            vendor_data = [
+                item for item in vendor_data
+                if item.get('price') > price_from
+            ]
+
+        if price_to is not None and price_to > 0:
+            vendor_data = [
+                item for item in vendor_data
+                if item.get('price') < price_to
+            ]
+
         if product_image is not None:
             product_image_path = path.join(UPLOAD_PATH, product_image)
             if path.isfile(product_image_path):
@@ -78,7 +93,7 @@ def get_search_results():
                     item for item in vendor_data if 
                     item.get('image')
                 ]
-                print(f"Found {len(vendor_data)} items with images")
+                # print(f"Found {len(vendor_data)} items with images")
                 from .utils.encode_image import encode_image
                 my_product_enc = encode_image(product_image_path)
                 filtered_vendor_data = []
@@ -86,19 +101,34 @@ def get_search_results():
                     enc = encode_image(item.get('image'))
                     if enc is not None:
                         distance = np.linalg.norm(my_product_enc - enc, axis=0)
-                        print(distance)
+                        # print(distance)
                         if distance < IMAGE_SIMILARITY_THRESHOLD:
                             filtered_vendor_data.append(item)
                 vendor_data = filtered_vendor_data
 
-        data.extend(vendor_data[:limit // 2])
+        if limit is not None:
+            # to make results look nicer
+            vendor_data = vendor_data[:limit // len(VENDORS)]
+        data.extend(vendor_data)
 
+    return data
+
+@bp.route('/', methods=('GET',))
+def get_search_results():
+    query = request.args.get('q')
+    limit = request.args.get('limit', MAX_RESULTS)
+    product_image = request.args.get('product_image', None)
+    price_from = float(request.args.get('price_from', 0))
+    price_to = float(request.args.get('price_to', 0))
+    
+    data = _search_products(query, limit, product_image, price_from, price_to)
+    
     # to make the results look nicer in the list
     random.shuffle(data)
     return jsonify(data)
 
 
-@bp.route('/upload_image', methods=('POST',))
+@bp.route('/upload-image', methods=('POST',))
 def upload_product_image():
     if not path.isdir(UPLOAD_PATH):
         import os
