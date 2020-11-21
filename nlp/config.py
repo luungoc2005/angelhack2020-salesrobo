@@ -1,3 +1,5 @@
+import os
+
 label_list = [
     "O", # Outside of a named entity
     "B-POS", # Beginning of positive property
@@ -7,3 +9,5 @@ label_list = [
 ]
 
 model_name = "bert-base-uncased"
+
+output_dir = os.path.join(os.path.dirname(__file__), 'model') 
