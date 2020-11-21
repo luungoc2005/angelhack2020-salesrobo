@@ -1,0 +1,136 @@
+<html>
+  <body>
+
+    <script type="module">
+      import { h, Component, render } from 'https://unpkg.com/preact@latest?module';
+      // import { useState, useEffect } from 'https://unpkg.com/preact@latest/hooks/dist/hooks.module.js?module';
+      import htm from 'https://unpkg.com/htm?module';
+
+      const ROOT_URL = 'http://127.0.0.1:5000';
+      // Initialize htm with Preact
+      const html = htm.bind(h);
+
+      class App extends Component {
+        constructor() {
+          super();
+          this.state = {
+            option: 0,
+            text: [],
+            states: [],
+          }
+          this.fetchData = this.fetchData.bind(this);
+          this.submitResult = this.submitResult.bind(this);
+        }
+
+        setOption(value) {
+          this.setState({ option: value })
+        }
+
+        setNodeState(idx) {
+          this.setState({
+            states: this.state.states.map(
+              (node_state, node_idx) => node_idx === idx ? this.state.option : node_state
+            )
+          })
+        }
+
+        async fetchData() {
+          const resp = await fetch(`${ROOT_URL}/random_entry`);
+          const json_data = await resp.json();
+          this.setState({ text: json_data.text, states: json_data.text.map(it => 0) })
+        }
+
+        async submitResult() {
+          const data = {
+            text: this.state.text,
+            class: this.state.states,
+          }
+          const resp = await fetch(`${ROOT_URL}/submit_entry`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data),
+          });
+          this.fetchData();
+        }
+
+        componentDidMount() {
+          document.addEventListener('keypress', (e) => {
+            switch (e.key) {
+              case "1":
+                this.setOption(0);
+                break;
+              case "2":
+                this.setOption(1);
+                break;
+              case "3":
+                this.setOption(2);
+                break;
+              case "4":
+                this.setOption(3);
+                break;
+              case "5":
+                this.setOption(4);
+                break;
+              case "Enter":
+                this.submitResult();
+                break;
+              default:
+                break;
+            }
+          })
+          this.fetchData();
+        }
+
+        renderTextNode(item, idx) {
+          const color = this.state.states[idx] === 1 || this.state.states[idx] === 2
+                  ? 'darkgreen'
+                  : this.state.states[idx] === 3 || this.state.states[idx] === 4
+                    ? 'darkred'
+                    : 'black';
+          return html`
+          <button
+            onClick=${() => this.setNodeState(idx)}
+            style="color: ${color}; font-size: large"
+          >
+            ${item}
+          </button>`
+        }
+
+        render() {
+          return html`
+          <div>
+            <div style="padding-bottom: 12px; display: flex; flex-direction: row;">
+              <button id="submit" style="font-weight: ${this.state.option === 0 ? '600' : 'initial'}" onclick="${() => this.setOption(0)}">
+                Neutral
+              </button>
+              <button id="submit" style="font-weight: ${this.state.option === 1 ? '600' : 'initial'}" onclick="${() => this.setOption(1)}">
+                B-Positive
+              </button>
+              <button id="submit" style="font-weight: ${this.state.option === 2 ? '600' : 'initial'}" onclick="${() => this.setOption(2)}">
+                Positive
+              </button>
+              <button id="submit" style="font-weight: ${this.state.option === 3 ? '600' : 'initial'}" onclick="${() => this.setOption(3)}">
+                B-Negative
+              </button>
+              <button id="submit" style="font-weight: ${this.state.option === 4 ? '600' : 'initial'}" onclick="${() => this.setOption(4)}">
+                Negative
+              </button>
+            </div>
+
+            <div style="padding-bottom: 12px; flex-wrap: wrap; display: flex; flex-direction: row;">
+            ${this.state.text && html`${this.state.text.map(this.renderTextNode.bind(this))}`}
+            </div>
+            
+            <button id="submit" onclick="${() => this.submitResult()}">
+              Submit
+            </button>
+          </div>`;
+        }
+      }
+    
+      render(html`<${App} />`, document.body);
+    </script>
+  </body>
+</html>

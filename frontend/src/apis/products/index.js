@@ -11,3 +11,6 @@ export const putProduct =
 
 export const postProduct = 
   async (id, data) => await apiInstance.post(`/products/${id}`, data)
+
+export const patchProduct = 
+  async (id, data) => await apiInstance.patch(`/products/${id}`, data)

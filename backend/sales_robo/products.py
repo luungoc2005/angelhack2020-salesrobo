@@ -54,3 +54,27 @@ def post_product(id):
     
     return jsonify(data)
 
+
+@bp.route('/<id>', methods=('PATCH',))
+def patch_product(id):
+    data = request.json
+    data['id'] = id
+
+    all_data = json.loads(DATA_FILE_NAME)
+    update_item = [item for item in all_data if item['id'] == id]
+
+    if len(update_item) == 0:
+        raise NotFound()
+    else:
+        update_item = update_item[0]
+
+    update_item.update(data)
+
+    all_data = [item for item in all_data if item['id'] != id]
+    all_data.append(update_item)
+
+    with open(DATA_FILE_NAME, 'w') as json_file:
+        json.dump(all_data, json_file)
+    
+    return jsonify(data)
+

@@ -7,12 +7,15 @@ from flask import (
 )
 from werkzeug.exceptions import (
     NotFound,
+    BadRequest,
 )
+from werkzeug.utils import secure_filename
 from urllib.request import pathname2url
 
 bp = Blueprint('search', __name__, url_prefix='/search')
 MAX_RESULTS = 100
 VENDORS = ['amazon', 'shopee']
+UPLOAD_PATH = path.join(path.dirname(__file__), "_upload")
 
 
 @bp.route('/suggestions', methods=('GET',))
@@ -56,4 +59,24 @@ def get_search_results():
     random.shuffle(data)
     return jsonify(data)
 
-    
+
+@bp.route('/upload_image', methods=('POST',))
+def upload_product_image():
+    if not path.isdir(UPLOAD_PATH):
+        import os
+        os.makedirs(UPLOAD_PATH, exist_ok=True)
+
+    # check if the post request has the file part
+    if 'file' not in request.files:
+        raise BadRequest()
+    file = request.files['file']
+    # if user does not select file, browser also
+    # submit an empty part without filename
+    if file.filename == '':
+        raise BadRequest()
+
+    filename = secure_filename(file.filename)
+    file.save(path.join(UPLOAD_PATH, filename))
+    return jsonify({
+        "name": filename
+    })

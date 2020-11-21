@@ -13,6 +13,8 @@ setup(
         'pandas',
         'pystan',
         'fbprophet',
+        'transformers',
         'torch',
+        'scikit-learn',
     ],
 )
