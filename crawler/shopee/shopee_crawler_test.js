@@ -2,6 +2,7 @@ const puppeteer = require('puppeteer');
 const qs = require('qs');
 const fs = require('fs');
 const uuid = require('uuid');
+const config = require('../config');
 
 (async () => {
   const browser = await puppeteer.launch({
@@ -10,12 +11,12 @@ const uuid = require('uuid');
   });
   const page = await browser.newPage();
 
-  const keyword = 'smartphone';
-  const MAX_ITEMS = 500;
+  const keyword = config.KEYWORD;
+  const MAX_ITEMS = config.MAX_ITEMS;
 
   page.on('console', msg => console.log('PAGE LOG:', msg.text()));
   await page.goto(`https://shopee.sg/search?${qs.stringify({
-    keyword: encodeURIComponent(keyword),
+    keyword,
   })}`);
 
   const extractItems = () => {
@@ -62,25 +63,30 @@ const uuid = require('uuid');
     return items;
   }
 
-  await page.waitForSelector(".shopee-mini-page-controller__state");
-  const maxPage = await page.evaluate(() => {
-    const containerElement = document.querySelector(".shopee-mini-page-controller__state");
-    const pageNavLinks = [...containerElement.children];
-    const numberedPages = []
-    for (let i = 0; i < pageNavLinks.length; i++) {
-      const element = pageNavLinks[i];
-      numberedPages.push(parseInt(element.textContent));
-    }
-    return Math.max(...numberedPages.filter(it => !isNaN(it)));
-  });
+  let maxPage = 1;
+  try {
+    await page.waitForSelector(".shopee-mini-page-controller__state");  
+    maxPage = await page.evaluate(() => {
+      const containerElement = document.querySelector(".shopee-mini-page-controller__state");
+      const pageNavLinks = [...containerElement.children];
+      const numberedPages = []
+      for (let i = 0; i < pageNavLinks.length; i++) {
+        const element = pageNavLinks[i];
+        numberedPages.push(parseInt(element.textContent));
+      }
+      return Math.max(...numberedPages.filter(it => !isNaN(it)));
+    });
+  }
+  catch {}
 
   let i = 0; // starts from 1
   const items = (await page.evaluate(extractItems))
     .map(item => ({id: uuid.v4(), ...item}));
-  while (i < maxPage && items.length < MAX_ITEMS) {
+  fs.writeFileSync(`data_shopee_${encodeURIComponent(keyword)}.json`, JSON.stringify(items));
+  while (i < maxPage - 1 && items.length < MAX_ITEMS) {
     i += 1;
     await page.goto(`https://shopee.sg/search?${qs.stringify({
-      keyword: encodeURIComponent(keyword),
+      keyword,
       page: i,
     })}`);
     await page.waitForSelector(".shopee-mini-page-controller__state");

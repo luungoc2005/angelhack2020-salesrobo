@@ -94,15 +94,15 @@ export const ProductSearch = () => {
             style={{ maxHeight: 320, overflowY: 'scroll' }}
             dataSource={searchResults}
             rowKey={item => item.id}
-            renderItem={item =>
-              <List.Item key={item.id}>
+            renderItem={(item) =>
+              <List.Item>
                 <List.Item.Meta
                   avatar={<Avatar src={item.image} />}
                   title={<>
                     {item.name}
                     <img src={siteIcons[item.from]} style={{ maxWidth: 16, maxHeight: 16, marginLeft: 12 }} />
                   </>}
-                  description={`$ ${item.price}`}
+                  description={item.price ? `$ ${item.price}` : ''}
                 />
               </List.Item>
             }

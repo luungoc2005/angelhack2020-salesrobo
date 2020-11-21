@@ -2,6 +2,7 @@ const puppeteer = require('puppeteer');
 const qs = require('qs');
 const fs = require('fs');
 const uuid = require('uuid');
+const config = require('../config');
 
 (async () => {
   const browser = await puppeteer.launch({
@@ -10,12 +11,12 @@ const uuid = require('uuid');
   });
   const page = await browser.newPage();
 
-  const keyword = 'smartphone';
-  const MAX_ITEMS = 500;
+  const keyword = config.KEYWORD;
+  const MAX_ITEMS = config.MAX_ITEMS;
 
   page.on('console', msg => console.log('PAGE LOG:', msg.text()));
   await page.goto(`https://amazon.sg/s?${qs.stringify({
-    k: encodeURIComponent(keyword),
+    k: keyword,
   })}`);
 
   const extractItems = () => {
@@ -49,26 +50,33 @@ const uuid = require('uuid');
     return items;
   }
 
-  await page.waitForSelector("ul.a-pagination");
-  const maxPage = await page.evaluate(() => {
-    const containerElement = document.querySelector("ul.a-pagination");
-    const pageNavLinks = [...containerElement.children];
-    const numberedPages = []
-    for (let i = 0; i < pageNavLinks.length; i++) {
-      const element = pageNavLinks[i];
-      numberedPages.push(parseInt(element.textContent));
-    }
-    return Math.max(...numberedPages.filter(it => !isNaN(it)));
-  });
-  console.log(`MAX PAGE: ${maxPage}`)
+  let maxPage = 1;
+  try {
+    await page.waitForSelector("ul.a-pagination");
+    maxPage = await page.evaluate(() => {
+      const containerElement = document.querySelector("ul.a-pagination");
+      const pageNavLinks = [...containerElement.children];
+      const numberedPages = []
+      for (let i = 0; i < pageNavLinks.length; i++) {
+        const element = pageNavLinks[i];
+        numberedPages.push(parseInt(element.textContent));
+      }
+      return Math.max(...numberedPages.filter(it => !isNaN(it)));
+    });
+    console.log(`MAX PAGE: ${maxPage}`)
+  }
+  catch {}
 
   let i = 1; // starts from 1
   const items = (await page.evaluate(extractItems))
     .map(item => ({id: uuid.v4(), ...item}));
+  // write every time
+  fs.writeFileSync(`data_amazon_${encodeURIComponent(keyword)}.json`, JSON.stringify(items));
+  
   while (i < maxPage && items.length < MAX_ITEMS) {
     i += 1;
     await page.goto(`https://amazon.sg/s?${qs.stringify({
-      k: encodeURIComponent(keyword),
+      k: keyword,
       page: i,
     })}`);
     await page.waitForSelector("ul.a-pagination");
