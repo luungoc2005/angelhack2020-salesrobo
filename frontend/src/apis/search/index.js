@@ -9,6 +9,11 @@ export const searchProducts =
     price_to: priceTo,
   })}`)
 
+export const searchReviews = 
+  async (keyword) => await apiInstance.get(`/search/reviews?${stringify({
+    q: keyword,
+  })}`)
+
 export const getSuggestions = 
   async (keyword) => await apiInstance.get(`/search/suggestions`)
 

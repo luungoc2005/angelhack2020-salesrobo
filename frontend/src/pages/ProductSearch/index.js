@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import {
   PageHeader,
   Layout,
@@ -18,6 +19,7 @@ import {
 
 import { getHolidays } from 'apis/misc_data';
 import { uploadSalesData } from 'apis/sales_data';
+import { putProduct } from 'apis/products';
 import { getSuggestions, searchProducts, uploadProductImage } from 'apis/search'
 
 import amazonIcon from 'assets/amazon_favicon.ico';
@@ -29,6 +31,8 @@ const siteIcons = {
 }
 
 export const ProductSearch = () => {
+  const history = useHistory();
+
   const [ searchInput, setSearchInput ] = useState('');
   const [ productImageFile, setProductImageFile ] = useState('');
   const [ affectedBy, setAffectedBy ] = useState(null);
@@ -84,6 +88,20 @@ export const ProductSearch = () => {
     formData.append('file', file)
     const resp = await uploadSalesData(formData);
     setSalesDataFile(resp.data.name);
+  }
+
+  const handleSubmit = async () => {
+    const resp = await putProduct({
+      keyword: searchInput,
+      product_image: productImageFile,
+      price_from: priceFrom,
+      price_to: priceTo,
+      marginal_cost: marginalCost,
+      sales: salesDataFile,
+    })
+    if (resp.data.id) {
+      history.push(`/products/${resp.data.id}`)
+    }
   }
 
   return (
@@ -206,6 +224,7 @@ export const ProductSearch = () => {
         block 
         type="primary"
         size="large"
+        onClick={handleSubmit}
       >
         Finish
       </Button>

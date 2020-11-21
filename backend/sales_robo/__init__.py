@@ -13,7 +13,7 @@ def create_app(test_config=None):
             '_upload'
         )
     )
-    CORS(app)
+    CORS(app, resources={r"/*": {"origins": "*"}})
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
@@ -33,11 +33,21 @@ def create_app(test_config=None):
     def healthcheck():
         return 'Hello, World!'
 
-    from . import products, misc_data, search, sales_data
+    from . import \
+        products, \
+        misc_data, \
+        search, \
+        sales_data, \
+        pricing, \
+        uploads, \
+        forecast
 
     app.register_blueprint(products.bp)
     app.register_blueprint(misc_data.bp)
     app.register_blueprint(search.bp)
     app.register_blueprint(sales_data.bp)
+    app.register_blueprint(pricing.bp)
+    app.register_blueprint(forecast.bp)
+    app.register_blueprint(uploads.bp)
 
     return app

@@ -9,6 +9,8 @@ setup(
     install_requires=[
         'flask',
         'flask-cors',
+        'requests',
+        'trading_calendars',
         'numpy',
         'pandas',
         'pystan',
@@ -16,5 +18,6 @@ setup(
         'transformers',
         'torch',
         'scikit-learn',
+        'statsmodels',
     ],
 )

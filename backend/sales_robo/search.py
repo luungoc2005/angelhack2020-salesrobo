@@ -128,6 +128,37 @@ def get_search_results():
     return jsonify(data)
 
 
+def _search_comments(query, limit=None):
+    data = []
+    for vendor in VENDORS:
+        vendor_file_path = path.join(
+            path.dirname(__file__), 
+            f"products_data/reviews_amazon_{pathname2url(query)}.json"
+        )
+        if not path.isfile(vendor_file_path):
+            continue
+        with open(vendor_file_path, 'r') as fp:
+            reviews_data = [
+                {**item, 'from': vendor}
+                for item in json.load(fp)
+            ]
+        if limit is not None:
+            # to make results look nicer
+            reviews_data = reviews_data[:limit // len(VENDORS)]
+        data.extend(reviews_data)
+    return data
+
+
+@bp.route('/reviews', methods=('GET',))
+def get_reviews():
+    query = request.args.get('q')
+    limit = request.args.get('limit', MAX_RESULTS)
+    data = _search_comments(query, limit)
+
+    random.shuffle(data)
+    return jsonify(data)
+
+
 @bp.route('/upload-image', methods=('POST',))
 def upload_product_image():
     if not path.isdir(UPLOAD_PATH):
