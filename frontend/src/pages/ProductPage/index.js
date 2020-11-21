@@ -6,6 +6,7 @@ import {
   Avatar,
   Image,
   List,
+  InputNumber,
 } from 'antd';
 import {
   useParams,
@@ -15,6 +16,7 @@ import Plot from 'react-plotly.js';
 import { BASE_URL } from 'apis';
 import { searchProducts, searchReviews } from 'apis/search';
 import { getProductById } from 'apis/products';
+import { updateUnitsSold } from 'apis/sales_data';
 import { getOptimalPricing } from 'apis/pricing';
 import { getForecastPlot } from 'apis/forecast';
 
@@ -34,50 +36,60 @@ export const ProductPage = () => {
 
   const [ searchResults, setSearchResults ] = useState([]);
   const [ reviewResults, setReviewResults ] = useState([]);
+  
+  const fetchProductData = async () => {
+    const resp = await getProductById(productId);
+    setProductData(resp.data);
+
+    const searchResp = await searchProducts(
+      resp.data.keyword,
+      resp.data.product_image,
+      resp.data.price_from,
+      resp.data.price_to
+    )
+    setSearchResults(searchResp.data);
+
+    const reviewsResp = await searchReviews(
+      resp.data.keyword,
+    )
+    setReviewResults(reviewsResp.data);
+  }
+
+  const fetchPricingData = async () => {
+    try {
+      const resp = await getOptimalPricing(productId);
+      setPricingData(resp.data);
+    }
+    catch {
+      setPricingData(null);
+    }
+  }
+
+  const fetchForecastPlot = async () => {
+    try {
+      const resp = await getForecastPlot(productId);
+      setForecastPlot(resp.data);
+    }
+    catch {
+      setForecastPlot(null);
+    }
+  }
 
   useEffect(() => {
-    const fetchProductData = async () => {
-      const resp = await getProductById(productId);
-      setProductData(resp.data);
-
-      const searchResp = await searchProducts(
-        resp.data.keyword,
-        resp.data.product_image,
-        resp.data.price_from,
-        resp.data.price_to
-      )
-      setSearchResults(searchResp.data);
-
-      const reviewsResp = await searchReviews(
-        resp.data.keyword,
-      )
-      setReviewResults(reviewsResp.data);
-    }
-
-    const fetchPricingData = async () => {
-      try {
-        const resp = await getOptimalPricing(productId);
-        setPricingData(resp.data);
-      }
-      catch {
-        setPricingData(null);
-      }
-    }
-
-    const fetchForecastPlot = async () => {
-      try {
-        const resp = await getForecastPlot(productId);
-        setForecastPlot(resp.data);
-      }
-      catch {
-        setForecastPlot(null);
-      }
-    }
-
     fetchProductData();
     fetchPricingData();
     fetchForecastPlot();
   }, [productId, setProductData, setPricingData, setSearchResults, setReviewResults])
+
+  const handleUnitsSoldChange = async (value) => {
+    try {
+      await updateUnitsSold(productId, {
+        units_sold: value,
+      });
+      fetchForecastPlot();
+    }
+    catch {}
+  }
 
   return <>
     <PageHeader
@@ -105,6 +117,13 @@ export const ProductPage = () => {
 
         <Typography.Paragraph>
           Marginal cost: {productData.marginal_cost ? `$ ${productData.marginal_cost}` : '?'}
+        </Typography.Paragraph>
+
+        <Typography.Paragraph>
+          Units sold today: <InputNumber 
+            defaultValue={0}
+            onChange={handleUnitsSoldChange}
+          />
         </Typography.Paragraph>
       </Layout.Content>
     </PageHeader>
@@ -146,7 +165,7 @@ export const ProductPage = () => {
     </PageHeader>
 
     <PageHeader
-      title="Additional data"
+      title="Reference data"
     >
       <List
         header={<div>Relevant products</div>}

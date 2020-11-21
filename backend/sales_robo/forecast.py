@@ -52,7 +52,7 @@ def get_forecast_sales(id):
             results = model.fit(disp=0)
             output = float(results.forecast()[0])
             last_value += output
-            preds.append(round(last_value))
+            preds.append(max(0, round(last_value))) # lower bound 0
             values.append(last_value)
             dates.append(dates[-1] + timedelta(days=1))
 

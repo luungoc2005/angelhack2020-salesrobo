@@ -9,6 +9,9 @@ from werkzeug.exceptions import (
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from os import path
+import numpy as np
+import pandas as pd
+from .products import _get_product_by_id
 
 bp = Blueprint('sales-data', __name__, url_prefix='/sales-data')
 DATA_FILE_NAME = 'data/sales_data.csv'
@@ -35,3 +38,46 @@ def upload_product_image():
     return jsonify({
         "name": filename
     })
+
+
+@bp.route('/<id>', methods=('PATCH',))
+def update_today_units(id):
+    data = request.json
+    
+    product_object = _get_product_by_id(id)
+    units_sold = data.get('units_sold', 0)
+
+    if product_object is not None:
+        product_sales = product_object.get('sales')
+        if product_sales is None:
+            raise BadRequest()
+        sales_file = path.join(UPLOAD_PATH, product_sales)
+        
+        if not path.isfile(sales_file):
+            raise BadRequest()
+
+        from statsmodels.tsa.arima_model import ARIMA
+        df = pd.read_csv(sales_file, index_col=None)
+        DATE_FORMAT = "%Y-%m-%d"
+        now_date = datetime.now().strftime(DATE_FORMAT)
+        df_dates = pd.to_datetime(df['date']).dt.strftime(DATE_FORMAT)
+        
+        # if date does not exist
+        if sum(df_dates == now_date) == 0:
+            df = df.append(pd.Series({
+                "date": now_date,
+                "units_sold": units_sold,
+                "price": df['price'].values.tolist()[-1]
+            }), ignore_index=True)
+        else:
+            df['units_sold'] = np.where(
+                df_dates == now_date,
+                units_sold,
+                df['units_sold'].values
+            )
+        
+        df.to_csv(sales_file, index=False)
+
+        return jsonify(data)
+    else:
+        raise NotFound()
