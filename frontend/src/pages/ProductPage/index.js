@@ -173,11 +173,10 @@ export const ProductPage = () => {
               bordered
               style={{ maxHeight: 320, overflowY: 'scroll' }}
               dataSource={featuresResults.positives}
-              rowKey={item => item.id}
               renderItem={(item) =>
                 <List.Item>
                   <List.Item.Meta
-                    description={item.text}
+                    description={item}
                   />
                 </List.Item>
               }
@@ -190,11 +189,10 @@ export const ProductPage = () => {
               bordered
               style={{ maxHeight: 320, overflowY: 'scroll' }}
               dataSource={featuresResults.negatives}
-              rowKey={item => item.id}
               renderItem={(item) =>
                 <List.Item>
                   <List.Item.Meta
-                    description={item.text}
+                    description={item}
                   />
                 </List.Item>
               }
