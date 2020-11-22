@@ -1,6 +1,9 @@
 ## AngelHack 2020 Submission - tobtob
 ---
 
+Everything was developed within <48 hours of the hackathon (see commit history for proof)
+
+
 # AI business advisory service
 
 - Optimal product pricing suggestion (based on price elasticity)
