@@ -38,7 +38,7 @@ def get_train_df():
 
 @app.route('/random_entry', methods=['GET'])
 def get_random_entry():
-    source_df = pd.read_json('reviews_amazon_lipstick.json')
+    source_df = pd.read_json('reviews_amazon_laptop.json')
     target_df = get_train_df()
 
     source_list = np.unique(source_df['text'])

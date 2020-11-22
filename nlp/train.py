@@ -17,7 +17,7 @@ model = AutoModelForTokenClassification.from_pretrained("bert-base-uncased")
 tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 
 max_seq_length=256
-train_test_split=.1
+train_test_split=.2
 df = pd.read_csv('train.csv', index_col=None)
 
 df['type'] = np.where(np.random.rand(len(df)) > train_test_split, 'train', 'test')
@@ -85,7 +85,7 @@ tokenizer = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForTokenClassification.from_pretrained(model_name, config=config)
 args = TrainingArguments(
     output_dir,
-    num_train_epochs=15,
+    num_train_epochs=200,
     per_device_train_batch_size=8,
     load_best_model_at_end=True,
     learning_rate=5e-6,

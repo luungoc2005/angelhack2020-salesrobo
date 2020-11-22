@@ -40,7 +40,8 @@ def create_app(test_config=None):
         sales_data, \
         pricing, \
         uploads, \
-        forecast
+        forecast, \
+        product_features
 
     app.register_blueprint(products.bp)
     app.register_blueprint(misc_data.bp)
@@ -49,5 +50,6 @@ def create_app(test_config=None):
     app.register_blueprint(pricing.bp)
     app.register_blueprint(forecast.bp)
     app.register_blueprint(uploads.bp)
+    app.register_blueprint(product_features.bp)
 
     return app

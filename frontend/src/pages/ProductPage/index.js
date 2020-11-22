@@ -22,6 +22,7 @@ import { getForecastPlot } from 'apis/forecast';
 
 import amazonIcon from 'assets/amazon_favicon.ico';
 import shopeeIcon from 'assets/shopee_favicon.ico';
+import { getRecommendedFeatures } from 'apis/product_features';
 
 const siteIcons = {
   'amazon': amazonIcon,
@@ -36,6 +37,7 @@ export const ProductPage = () => {
 
   const [ searchResults, setSearchResults ] = useState([]);
   const [ reviewResults, setReviewResults ] = useState([]);
+  const [ featuresResults, setFeaturesResults ] = useState([]);
   
   const fetchProductData = async () => {
     const resp = await getProductById(productId);
@@ -53,6 +55,11 @@ export const ProductPage = () => {
       resp.data.keyword,
     )
     setReviewResults(reviewsResp.data);
+
+    const featuresResp = await getRecommendedFeatures(
+      resp.data.keyword,
+    )
+    setFeaturesResults(featuresResp.data);
   }
 
   const fetchPricingData = async () => {
@@ -157,10 +164,43 @@ export const ProductPage = () => {
           </Typography.Paragraph>
         </>}
 
-        <Typography.Title level={5}>Recommended Features</Typography.Title>
-        <Typography.Paragraph>
-          
-        </Typography.Paragraph>
+        {featuresResults && <>
+          <Typography.Title level={5}>Recommended Features</Typography.Title>
+          <Typography.Paragraph>
+            <List
+              header={<div>Users liked these features</div>}
+              itemLayout="horizontal"
+              bordered
+              style={{ maxHeight: 320, overflowY: 'scroll' }}
+              dataSource={featuresResults.positives}
+              rowKey={item => item.id}
+              renderItem={(item) =>
+                <List.Item>
+                  <List.Item.Meta
+                    description={item.text}
+                  />
+                </List.Item>
+              }
+            />
+          </Typography.Paragraph>
+          <Typography.Paragraph>
+            <List
+              header={<div>Users did not like these features</div>}
+              itemLayout="horizontal"
+              bordered
+              style={{ maxHeight: 320, overflowY: 'scroll' }}
+              dataSource={featuresResults.negatives}
+              rowKey={item => item.id}
+              renderItem={(item) =>
+                <List.Item>
+                  <List.Item.Meta
+                    description={item.text}
+                  />
+                </List.Item>
+              }
+            />
+          </Typography.Paragraph>
+        </>}
       </Layout.Content>
     </PageHeader>
 

@@ -39,7 +39,7 @@ def detokenize(tokens):
             restored_text.append(tokens[i])
     return ' '.join(restored_text)
 
-def infer_predict(tag_seq_batch, sent_batch, ix_to_tag, delimiter=''):
+def infer_predict(tag_seq_batch, sent_batch, ix_to_tag):
     result = []
 
     for sent_ix, tokens_in in enumerate(sent_batch):
@@ -58,7 +58,7 @@ def infer_predict(tag_seq_batch, sent_batch, ix_to_tag, delimiter=''):
                     # Flush the previous entity
                     if entity_name not in entities:
                         entities[entity_name] = []
-                        entities[entity_name].append(delimiter.join(buffer))
+                        entities[entity_name].append(detokenize(buffer))
                         buffer = []
 
                 entity_name = new_entity_name
@@ -76,7 +76,7 @@ def infer_predict(tag_seq_batch, sent_batch, ix_to_tag, delimiter=''):
 
                     if entity_name not in entities:
                         entities[entity_name] = []
-                    entities[entity_name].append(delimiter.join(buffer))
+                    entities[entity_name].append(detokenize(buffer))
                     buffer = []
                     entity_name = ''
                 else:
@@ -95,11 +95,7 @@ if __name__ == '__main__':
             probs = model(**ids)[0]
             result_cls = torch.argmax(probs, axis=-1)[0][1:]
 
-        positives = []
-        negatives = []
         max_length = min(len(tokens), len(result_cls))
-        running_word = []
-        running_type = 0
 
         ix_to_tag = {}
         for ix in range(len(label_list)):
