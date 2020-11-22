@@ -8,7 +8,14 @@
 - User-desired features suggestion (using a BERT-based token classification model)
 
 # Project structure
-`backend/`: Main service backend
-`frontend/`: Main service frontend
-`crawler/`: Product listing & reviews crawler for Amazon/Shopee
-`nlp/`: Labeling tool & model training for product features suggestion model
+
+- `backend/`: Main service backend
+- `frontend/`: Main service frontend
+- `crawler/`: Product listing & reviews crawler for Amazon/Shopee
+- `nlp/`: Labeling tool & model training for product features suggestion model
+
+# Use of AI
+
+- Products listing - filtering, using `MobileNet` as image encoder for similarity search
+- NLP for product reviews analysis
+- (potentially) Product sales forecast
